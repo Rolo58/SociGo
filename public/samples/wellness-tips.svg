@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Sample social media creative">
+  <defs>
+    <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ecfdf5"/>
+      <stop offset="100%" stop-color="#6ee7b7" stop-opacity="0.55"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="800" fill="url(#g3)"/>
+  <circle cx="132" cy="756" r="133" fill="#6ee7b7" opacity="0.15"/><circle cx="508" cy="82" r="160" fill="#6ee7b7" opacity="0.13"/><circle cx="562" cy="284" r="162" fill="#6ee7b7" opacity="0.28"/><circle cx="563" cy="285" r="170" fill="#6ee7b7" opacity="0.24"/><circle cx="699" cy="389" r="151" fill="#6ee7b7" opacity="0.29"/><rect x="54" y="-16" width="210" height="59" rx="24" fill="#10b981" opacity="0.15" transform="rotate(-16 159.0 13.5)"/><rect x="-88" y="396" width="213" height="73" rx="24" fill="#10b981" opacity="0.08" transform="rotate(-12 18.5 432.5)"/><rect x="329" y="447" width="309" height="118" rx="24" fill="#10b981" opacity="0.11" transform="rotate(6 483.5 506.0)"/>
+  <g fill="none" stroke="#10b981" stroke-opacity="0.5" stroke-width="3">
+    <rect x="60" y="60" width="680" height="680" rx="36"/>
+  </g>
+  <text x="50%" y="47%" text-anchor="middle" font-family="Inter, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#10b981" opacity="0.85">Wellness Tips</text>
+  <text x="50%" y="56%" text-anchor="middle" font-family="Inter, Helvetica, Arial, sans-serif" font-size="20" fill="#10b981" opacity="0.6">Sample creative</text>
+</svg>

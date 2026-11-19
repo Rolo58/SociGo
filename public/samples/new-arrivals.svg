@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Sample social media creative">
+  <defs>
+    <linearGradient id="g9" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ecfeff"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.55"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="800" fill="url(#g9)"/>
+  <circle cx="19" cy="450" r="190" fill="#38bdf8" opacity="0.26"/><circle cx="4" cy="794" r="215" fill="#38bdf8" opacity="0.26"/><circle cx="144" cy="484" r="104" fill="#38bdf8" opacity="0.22"/><circle cx="569" cy="63" r="90" fill="#38bdf8" opacity="0.17"/><circle cx="543" cy="568" r="192" fill="#38bdf8" opacity="0.2"/><rect x="695" y="8" width="149" height="71" rx="24" fill="#0ea5e9" opacity="0.11" transform="rotate(-18 769.5 43.5)"/><rect x="690" y="0" width="379" height="97" rx="24" fill="#0ea5e9" opacity="0.08" transform="rotate(5 879.5 48.5)"/><rect x="-36" y="353" width="286" height="118" rx="24" fill="#0ea5e9" opacity="0.14" transform="rotate(2 107.0 412.0)"/>
+  <g fill="none" stroke="#0ea5e9" stroke-opacity="0.5" stroke-width="3">
+    <rect x="60" y="60" width="680" height="680" rx="36"/>
+  </g>
+  <text x="50%" y="47%" text-anchor="middle" font-family="Inter, Helvetica, Arial, sans-serif" font-size="42" font-weight="700" fill="#0ea5e9" opacity="0.85">New Arrivals</text>
+  <text x="50%" y="56%" text-anchor="middle" font-family="Inter, Helvetica, Arial, sans-serif" font-size="20" fill="#0ea5e9" opacity="0.6">Sample creative</text>
+</svg>
