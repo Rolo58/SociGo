@@ -159,8 +159,8 @@ export function ClientsPage() {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           destructive
-                          onSelect={() => {
-                            const result = archiveClient(client.id);
+                          onSelect={async () => {
+                            const result = await archiveClient(client.id);
                             notify(
                               result.ok
                                 ? {
@@ -233,8 +233,8 @@ export function ClientsPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => {
-                      const result = restoreClient(client.id);
+                    onClick={async () => {
+                      const result = await restoreClient(client.id);
                       notify(
                         result.ok
                           ? { tone: 'success', title: 'Client restored', description: `${client.business_name} is active again.` }
@@ -328,8 +328,8 @@ export function ClientDetailPage() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => {
-              const res = restoreClient(client.id);
+            onClick={async () => {
+              const res = await restoreClient(client.id);
               notify(res.ok ? { tone: 'success', title: 'Client restored' } : { tone: 'error', title: 'Could not restore', description: res.error });
             }}
           >
@@ -430,8 +430,8 @@ export function ClientDetailPage() {
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => {
-                  const res = rotateReviewToken(client.id);
+                onClick={async () => {
+                  const res = await rotateReviewToken(client.id);
                   notify(
                     res.ok
                       ? {
@@ -458,8 +458,8 @@ export function ClientDetailPage() {
               size="sm"
               className="mt-3 w-full text-destructive hover:bg-destructive/5 hover:text-destructive"
               disabled={Boolean(client.archived_at)}
-              onClick={() => {
-                const res = archiveClient(client.id);
+              onClick={async () => {
+                const res = await archiveClient(client.id);
                 notify(
                   res.ok
                     ? { tone: 'success', title: 'Client archived', description: 'Their posts moved to the archive.' }

@@ -1,6 +1,9 @@
 import { lazy } from 'react';
 import { createHashRouter, Navigate, RouterProvider } from 'react-router-dom';
+import { ConvexProvider } from 'convex/react';
+import { convex } from '@/lib/convex';
 import { StoreProvider } from '@/lib/store';
+import { RequireAuth } from '@/components/require-auth';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Toaster } from '@/components/toaster';
 import { AppShell } from '@/components/layout/app-shell';
@@ -27,57 +30,71 @@ const router = createHashRouter([
   {
     path: '/app',
     element: (
-      <AppShell>
-        <DashboardPage />
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          <DashboardPage />
+        </AppShell>
+      </RequireAuth>
     ),
   },
   {
     path: '/app/posts',
     element: (
-      <AppShell>
-        {withSuspense(<PostsPage />)}
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          {withSuspense(<PostsPage />)}
+        </AppShell>
+      </RequireAuth>
     ),
   },
   {
     path: '/app/posts/:id',
     element: (
-      <AppShell>
-        {withSuspense(<PostDetailPage />)}
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          {withSuspense(<PostDetailPage />)}
+        </AppShell>
+      </RequireAuth>
     ),
   },
   {
     path: '/app/clients',
     element: (
-      <AppShell>
-        {withSuspense(<ClientsPage />)}
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          {withSuspense(<ClientsPage />)}
+        </AppShell>
+      </RequireAuth>
     ),
   },
   {
     path: '/app/clients/:id',
     element: (
-      <AppShell>
-        {withSuspense(<ClientDetailPage />)}
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          {withSuspense(<ClientDetailPage />)}
+        </AppShell>
+      </RequireAuth>
     ),
   },
   {
     path: '/app/calendar',
     element: (
-      <AppShell>
-        {withSuspense(<CalendarPage />)}
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          {withSuspense(<CalendarPage />)}
+        </AppShell>
+      </RequireAuth>
     ),
   },
   {
     path: '/app/settings',
     element: (
-      <AppShell>
-        {withSuspense(<SettingsPage />)}
-      </AppShell>
+      <RequireAuth>
+        <AppShell>
+          {withSuspense(<SettingsPage />)}
+        </AppShell>
+      </RequireAuth>
     ),
   },
   { path: '/review/:token', element: withSuspense(<ReviewPortalPage />) },
@@ -87,11 +104,13 @@ const router = createHashRouter([
 
 export function App() {
   return (
-    <StoreProvider>
-      <TooltipProvider delayDuration={200}>
-        <RouterProvider router={router} />
-        <Toaster />
-      </TooltipProvider>
-    </StoreProvider>
+    <ConvexProvider client={convex}>
+      <StoreProvider>
+        <TooltipProvider delayDuration={200}>
+          <RouterProvider router={router} />
+          <Toaster />
+        </TooltipProvider>
+      </StoreProvider>
+    </ConvexProvider>
   );
 }

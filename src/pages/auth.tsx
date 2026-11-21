@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowRight, Check, Loader2, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -9,9 +9,8 @@ import { FormField } from '@/components/form-field';
 import { useStore } from '@/lib/store';
 
 /**
- * Phase 1 auth screens are presentational only. The PRD puts real authentication in Phase 2
- * (Supabase Auth), so these forms validate input and route into the prototype workspace
- * without creating a session or storing credentials.
+ * Manager authentication. Credentials are verified by the Convex backend (PBKDF2 hashes,
+ * opaque session tokens) — the browser never sees a password hash or a user id it can edit.
  */
 
 function AuthLayout({ children, aside }: { children: React.ReactNode; aside: React.ReactNode }) {
@@ -31,29 +30,27 @@ function AuthLayout({ children, aside }: { children: React.ReactNode; aside: Rea
   );
 }
 
-function PrototypeNotice() {
+function DemoHint({ children }: { children: React.ReactNode }) {
   return (
     <div className="mb-5 rounded-lg border border-primary/20 bg-primary/5 px-3.5 py-3">
       <p className="flex items-center gap-1.5 text-[12px] font-semibold text-primary">
-        <ShieldCheck className="size-3.5" /> Prototype build
+        <ShieldCheck className="size-3.5" /> Self-hosted demo
       </p>
-      <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
-        Authentication arrives in Phase 2. These forms are not connected to a database yet and accept no real
-        credentials — continue to explore the workspace with sample data.
-      </p>
+      <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">{children}</p>
     </div>
   );
 }
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { notify } = useStore();
+  const location = useLocation();
+  const { login, notify } = useStore();
   const [email, setEmail] = React.useState('priya@northlight.studio');
-  const [password, setPassword] = React.useState('prototype-only');
+  const [password, setPassword] = React.useState('approvalflow-demo');
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [busy, setBusy] = React.useState(false);
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     const next: Record<string, string> = {};
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())) next.email = 'Enter a valid email address.';
@@ -62,11 +59,17 @@ export function LoginPage() {
     if (Object.keys(next).length > 0) return;
 
     setBusy(true);
-    window.setTimeout(() => {
-      setBusy(false);
-      notify({ tone: 'info', title: 'Prototype mode', description: 'Signed in with sample data. Real auth is Phase 2.' });
-      navigate('/app');
-    }, 350);
+    const result = await login({ email, password });
+    setBusy(false);
+
+    if (!result.ok) {
+      notify({ tone: 'error', title: 'Could not sign you in', description: result.error });
+      return;
+    }
+
+    const from = (location.state as { from?: string } | null)?.from;
+    notify({ tone: 'success', title: 'Welcome back', description: 'Your workspace is ready.' });
+    navigate(from && from.startsWith('/app') ? from : '/app', { replace: true });
   };
 
   return (
@@ -103,7 +106,10 @@ export function LoginPage() {
       <p className="mt-1 text-[13px] text-muted-foreground">Log in to your manager workspace.</p>
 
       <div className="mt-6">
-        <PrototypeNotice />
+        <DemoHint>
+          Demo workspace: <span className="font-medium text-foreground">priya@northlight.studio</span> /{' '}
+          <span className="font-medium text-foreground">approvalflow-demo</span>
+        </DemoHint>
         <form onSubmit={submit} noValidate className="space-y-4">
           <FormField label="Email address" htmlFor="login-email" required error={errors.email}>
             <Input
@@ -145,7 +151,7 @@ export function LoginPage() {
 
 export function RegisterPage() {
   const navigate = useNavigate();
-  const { notify } = useStore();
+  const { register, notify } = useStore();
   const [form, setForm] = React.useState({ full_name: '', business_name: '', email: '', password: '' });
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [busy, setBusy] = React.useState(false);
@@ -159,7 +165,7 @@ export function RegisterPage() {
     });
   };
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     const next: Record<string, string> = {};
     if (form.full_name.trim().length < 2) next.full_name = 'Enter your full name.';
@@ -170,11 +176,16 @@ export function RegisterPage() {
     if (Object.keys(next).length > 0) return;
 
     setBusy(true);
-    window.setTimeout(() => {
-      setBusy(false);
-      notify({ tone: 'info', title: 'Prototype mode', description: 'Account creation lands in Phase 2.' });
-      navigate('/app');
-    }, 350);
+    const result = await register(form);
+    setBusy(false);
+
+    if (!result.ok) {
+      notify({ tone: 'error', title: 'Could not create your account', description: result.error });
+      return;
+    }
+
+    notify({ tone: 'success', title: 'Account created', description: 'Add your first client to get started.' });
+    navigate('/app', { replace: true });
   };
 
   return (
@@ -205,7 +216,10 @@ export function RegisterPage() {
       <p className="mt-1 text-[13px] text-muted-foreground">Start managing client approvals today.</p>
 
       <div className="mt-6">
-        <PrototypeNotice />
+        <DemoHint>
+          Accounts are stored in your own Convex deployment. Passwords are hashed server-side and never stored in the
+          browser.
+        </DemoHint>
         <form onSubmit={submit} noValidate className="space-y-4">
           <FormField label="Full name" htmlFor="register-name" required error={errors.full_name}>
             <Input
@@ -278,7 +292,8 @@ export function ForgotPasswordPage() {
         <div className="max-w-md">
           <h2 className="text-3xl font-semibold leading-tight tracking-tight">Back into your workspace.</h2>
           <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">
-            Password reset emails will be handled by Supabase Authentication in Phase 2.
+            Password recovery needs an email provider, which is not part of this release. A manager can change their
+            password from Settings once signed in.
           </p>
         </div>
       }
@@ -286,12 +301,12 @@ export function ForgotPasswordPage() {
       <h1 className="text-2xl font-semibold tracking-tight">Reset your password</h1>
       <p className="mt-1 text-[13px] text-muted-foreground">We will email you a secure reset link.</p>
       <div className="mt-6">
-        <PrototypeNotice />
         {sent ? (
           <Card className="p-5 text-center">
             <p className="text-[13.5px] font-semibold">Check your inbox</p>
             <p className="mt-1 text-[12.5px] leading-relaxed text-muted-foreground">
-              In the finished product a reset link would be sent to {email}. This prototype does not send email.
+              Email delivery is not configured in this release, so no message was sent to {email}. Ask your deployment
+              owner to reset the password server-side, or sign in and change it from Settings.
             </p>
             <Button asChild variant="outline" size="sm" className="mt-4">
               <Link to="/login">Back to log in</Link>

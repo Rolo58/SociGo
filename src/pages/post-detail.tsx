@@ -97,8 +97,8 @@ export function PostDetailPage() {
             )}
             {canSubmit && (
               <Button
-                onClick={() => {
-                  const result = submitPost(post.id);
+                onClick={async () => {
+                  const result = await submitPost(post.id);
                   notify(
                     result.ok
                       ? {
@@ -274,8 +274,8 @@ export function PostDetailPage() {
                 variant="outline"
                 size="sm"
                 className="justify-start"
-                onClick={() => {
-                  const result = duplicatePost(post.id);
+                onClick={async () => {
+                  const result = await duplicatePost(post.id);
                   if (result.ok) {
                     notify({ tone: 'success', title: 'Draft duplicated' });
                     navigate(`/app/posts/${result.data.id}`);
@@ -291,8 +291,8 @@ export function PostDetailPage() {
                   variant="outline"
                   size="sm"
                   className="justify-start"
-                  onClick={() => {
-                    const result = restorePost(post.id);
+                  onClick={async () => {
+                    const result = await restorePost(post.id);
                     notify(
                       result.ok
                         ? { tone: 'success', title: 'Post restored as draft' }
@@ -307,8 +307,8 @@ export function PostDetailPage() {
                   variant="outline"
                   size="sm"
                   className="justify-start text-destructive hover:bg-destructive/5 hover:text-destructive"
-                  onClick={() => {
-                    const result = archivePost(post.id);
+                  onClick={async () => {
+                    const result = await archivePost(post.id);
                     notify(
                       result.ok
                         ? { tone: 'success', title: 'Post archived' }

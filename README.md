@@ -8,7 +8,7 @@ It simplifies the content approval process by bringing managers and clients toge
 
 Instead of managing approvals through scattered WhatsApp messages, emails and spreadsheets, ApprovalFlow provides a centralised platform to submit content, collect feedback and track approval statuses.
 
-> **Status: Phase 1 — Frontend.** The complete manager and client interface is built and runs on fictional sample data. Supabase, authentication and storage are intentionally not connected yet (Phase 2).
+> **Status: Phase 2 — Backend connected.** The full manager and client interface now runs on a real Convex backend: server-side authentication, tenant-scoped data, the approval workflow, feedback history and account management. See [Backend](#-backend-convex) for setup. Sample data is fictional and can be seeded with one command.
 
 ---
 
@@ -44,9 +44,10 @@ ApprovalFlow aims to eliminate unnecessary communication overhead and help freel
 - React Router
 - date-fns
 
-**Backend (Phase 2)**
-- Supabase
-- PostgreSQL
+**Backend**
+- Convex (self-hostable, Apache-2.0)
+- Convex built-in document database with schema validation and indexes
+- Server-side sessions using hashed opaque tokens
 
 ---
 
@@ -73,41 +74,60 @@ ApprovalFlow aims to eliminate unnecessary communication overhead and help freel
 git clone YOUR_REPOSITORY_URL
 cd SociGo
 npm install
+```
+
+ApprovalFlow needs a Convex deployment. The fastest option is Convex Cloud's free tier:
+
+```bash
+npx convex dev --configure new --dev-deployment cloud
+```
+
+That command creates a deployment, writes `VITE_CONVEX_URL` for you, and pushes the backend functions in `convex/`. Leave it running while you develop — it re-pushes functions on save.
+
+Then, in a second terminal, start the frontend:
+
+```bash
 npm run dev
 ```
 
-Open the printed URL (defaults to `http://localhost:12000`).
-
-No environment variables are required for Phase 1. To configure the Phase 2 backend later, copy the example file:
+Open the printed URL (defaults to `http://localhost:12000`). Register a manager account, or load the demo workspace:
 
 ```bash
-cp .env.example .env
+npx convex run seed:seedDemoWorkspace
+```
+
+The demo workspace signs in as `priya@northlight.studio` / `approvalflow-demo`.
+
+To point at a self-hosted backend instead, copy the example environment file and fill it in:
+
+```bash
+cp .env.example .env.local
 ```
 
 ### Available scripts
 
 | Script | Purpose |
 | --- | --- |
-| `npm run dev` | Start the Vite dev server |
+| `npm run dev` | Start the Vite dev server (needs `npx convex dev` running) |
 | `npm run build` | Type-check and build for production |
 | `npm run preview` | Preview the production build |
 | `npm run lint` | Type-check only (`tsc --noEmit`) |
-| `npm test` | Run the data-layer test suite |
+| `npm test` | Run backend and data-layer tests |
 
 ---
 
-## 🧭 Exploring the prototype
+## 🧭 Exploring the app
 
-The app opens directly into the sample manager workspace as **Priya Raman** of Northlight Studio. No sign-up is required.
+Sign in at `#/login` with the seeded demo manager, `priya@northlight.studio` / `approvalflow-demo`, or register a fresh workspace at `#/register`.
 
 | What to try | Where |
 | --- | --- |
-| Manager dashboard | `#/app` |
+| Manager dashboard with live figures and activity | `#/app` |
 | Post list, filters and create/edit dialog | `#/app/posts` |
 | Client list and client detail with review link | `#/app/clients` |
 | Month and week calendar | `#/app/calendar` |
-| Settings, data export and sample reset | `#/app/settings` |
-| Sign-in screens (presentational only) | `#/login`, `#/register` |
+| Profile, password, export and account deletion | `#/app/settings` |
+| Sign in, register and password reset | `#/login`, `#/register`, `#/forgot-password` |
 
 ### Client review links
 
@@ -120,9 +140,14 @@ Each client has a private, unguessable review token. Sample links:
 | Ridgeline Fitness | `#/review/rvt_ridgeline_77ab2c90` |
 | Solstice Skincare | `#/review/rvt_solstice_1e5b6d44` |
 
-A single post opens at `#/review/<token>/post/<postId>`. Opening a post that belongs to a different client is refused.
+A single post opens at `#/review/<token>/post/<postId>`. The server resolves the token, so opening a post that belongs to a different client is refused. Clients never hold an account and never see the manager dashboard.
 
-Data lives in `localStorage` under `approvalflow.db.v1`. Use **Settings → Reset to sample data** to restore the fictional dataset.
+All data lives in the Convex deployment. Reload the demo workspace at any time:
+
+```bash
+npx convex run seed:resetAll
+npx convex run seed:seedDemoWorkspace
+```
 
 ---
 
@@ -140,17 +165,31 @@ src/
 │   ├── clients/                # Client create/edit dialog
 │   └── …                       # Shared status badge, empty state, toaster, form field
 ├── lib/
-│   ├── types.ts                # Domain types mirroring the PostgreSQL schema
-│   ├── seed.ts                 # Fictional sample data
-│   ├── repository.ts           # Permission-checked read/write operations
-│   ├── storage.ts              # localStorage persistence (Phase 2 swap point)
-│   ├── store.tsx               # React context store
+│   ├── types.ts                # Domain types shared with the backend
+│   ├── convex.ts               # Convex client instance
+│   ├── session.ts              # Opaque session token in localStorage
+│   ├── store.tsx               # React context store over Convex queries
+│   ├── repository.ts           # Derived read helpers (stats, filters)
 │   ├── status.ts               # Status and platform metadata
 │   └── format.ts               # Date and text helpers
 └── pages/                      # Route-level screens
+
+convex/
+├── schema.ts                   # Tables, indexes and field validation
+├── auth.ts                     # Session tokens, password hashing, guards
+├── accounts.ts                 # Register, login, profile, password, deletion
+├── clients.ts                  # Client CRUD and review-link tokens
+├── posts.ts                    # Post CRUD, submission, revisions
+├── review.ts                   # Public review portal queries and decisions
+├── dashboard.ts                # Live figures, activity feed
+├── seed.ts                     # Fictional demo workspace
+└── shared.ts                   # Serializers, validation, activity logging
+
+tests/
+└── workspace.test.ts           # Backend behaviour against the real runtime
 ```
 
-**Key design decision:** every read and write goes through `lib/repository.ts`, which takes the acting `managerId` (or review token) explicitly and rejects anything outside that scope. Phase 2 replaces the internals of that module and `storage.ts` with Supabase calls; the UI does not need to change.
+**Key design decision:** the browser never sends a manager id, a client id or an approval identity. It sends only an opaque session token, and every query and mutation resolves the acting manager on the server. Review links work the same way: the token is exchanged for exactly one client's scope, so a link cannot reach another client's content.
 
 ### Roles and permissions implemented
 
@@ -186,22 +225,72 @@ The suite covers the security-critical rules rather than UI rendering:
 
 ---
 
-## 🔒 Security notes for Phase 1
+## 🔒 Security notes
 
-- Review links carry an opaque token; the browser never supplies a client id that the app trusts.
-- Decisions are recorded against the client resolved from the token.
-- Posts carry a revision number; a decision is rejected if the post changed after the client opened it, and duplicate decisions on the same revision are blocked.
-- Archiving a client rotates their token and archives their posts, so old links stop working.
-- No credentials, API keys or service-role tokens exist in the frontend. `.env` files are git-ignored.
+- **Authentication is server-side.** Passwords are hashed with PBKDF2-SHA256 and a per-user salt. Sessions are random opaque tokens; only their SHA-256 hash is stored, so a database leak does not hand out live sessions.
+- **The browser is never trusted for identity.** It sends a session token only. Manager ids, client ids and approval identities are all resolved on the server, so a tampered request cannot act as another user.
+- **Every query and mutation is tenant-scoped.** Records are read through manager-scoped indexes and ownership is re-checked before any write.
+- **Review links carry an opaque token**, exchanged server-side for exactly one client's scope. A valid link for one client cannot read or approve another client's post.
+- **Stale and duplicate decisions are rejected.** Posts carry a revision number; a decision made against an older revision, or a second decision on the same revision, fails.
+- **Archiving a client rotates their token** and archives their posts, so old links stop working.
+- **No admin credentials reach the browser.** Only `VITE_CONVEX_URL` is public. `.env.local` is git-ignored and the deploy key is documented as server-side only.
 - All sample people, businesses and email addresses are fictional.
+
+---
+
+## ☁️ Backend (Convex)
+
+ApprovalFlow uses [Convex](https://www.convex.dev/), which is Apache-2.0 licensed and can run entirely on your own machine. Nothing in the app requires a paid service.
+
+### Option A — Convex Cloud (free tier)
+
+```bash
+npx convex dev --configure new --dev-deployment cloud
+```
+
+### Option B — Self-hosted
+
+Run the open-source backend binary, then point the CLI at it:
+
+```bash
+# 1. Generate a deploy key (format: <instance-name>|<instance-secret>)
+convex-local-backend keygen admin-key --instance-name approvalflow --instance-secret <your-secret>
+
+# 2. Start the backend
+convex-local-backend \
+  --instance-name approvalflow \
+  --instance-secret <your-secret> \
+  --port 3210
+
+# 3. In .env.local
+CONVEX_SELF_HOSTED_URL=http://127.0.0.1:3210
+CONVEX_SELF_HOSTED_ADMIN_KEY=approvalflow|<your-secret>
+VITE_CONVEX_URL=http://127.0.0.1:3210
+
+# 4. Push functions
+npx convex dev --once
+```
+
+Deploy the built frontend (`npm run build` → `dist/`) to any static host. The browser needs only `VITE_CONVEX_URL`.
+
+### Schema and migrations
+
+The schema is code, in `convex/schema.ts`. Pushing functions applies it. There are no separate migration files: indexes and validators ship with the functions that use them, and Convex validates every write against the schema.
+
+### Seed the demo workspace
+
+```bash
+npx convex run seed:seedDemoWorkspace   # create the fictional workspace
+npx convex run seed:resetAll            # wipe everything, including accounts
+```
 
 ---
 
 ## 🗺️ Roadmap
 
 - **Phase 1 (done):** Frontend — dashboard, clients, posts, calendar, client review portal, responsive shell.
-- **Phase 2:** Supabase — schema, Row Level Security, authentication, storage, replacing the repository internals.
-- **Phase 3:** Wire up post creation, uploads, review access and approval against the real backend.
+- **Phase 2 (done):** Backend — Convex schema, server-side authentication, tenant isolation, approval workflow, feedback history, account management.
+- **Phase 3 (next):** Image uploads to Convex file storage (creatives currently use bundled sample artwork).
 - **Phase 4:** Permission, workflow and responsive testing.
 - **Phase 5:** Validation with freelance social media managers.
 
@@ -231,3 +320,4 @@ MIT — see [LICENSE](LICENSE).
 | date-fns | MIT |
 | Vite, Vitest | MIT |
 | TypeScript | Apache-2.0 |
+| Convex (`convex`, `convex-local-backend`) | Apache-2.0 |

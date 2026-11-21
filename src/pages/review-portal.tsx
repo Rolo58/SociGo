@@ -27,11 +27,12 @@ import {
 import { Logo } from '@/components/logo';
 import { StatusBadge, PlatformChip } from '@/components/status-badge';
 import { EmptyState } from '@/components/empty-state';
+import { useQuery } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { useStore } from '@/lib/store';
-import { getReviewPost, resolveReviewSession } from '@/lib/repository';
 import { formatDate, formatDateTime, deadlineLabel } from '@/lib/format';
 import { cn } from '@/lib/utils';
-import type { Decision, Post } from '@/lib/types';
+import type { Post } from '@/lib/types';
 
 /**
  * Client-facing portal. The review token in the URL is the only credential, and every
@@ -40,19 +41,29 @@ import type { Decision, Post } from '@/lib/types';
  */
 export function ReviewPortalPage() {
   const { token = '', postId } = useParams();
-  const { db, decideAsClient, notify } = useStore();
+  const session = useQuery(api.review.session, { token });
 
-  const session = React.useMemo(() => resolveReviewSession(db, token), [db, token]);
-
-  if (!session.ok) {
+  if (session === undefined) {
     return (
-    <ReviewShell>
-      <AccessDenied message={session.error} />
-    </ReviewShell>
-  );
+      <ReviewShell>
+        <div className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
+          <Loader2 className="size-5 animate-spin" />
+          <p className="text-[13px]">Checking this review link…</p>
+        </div>
+      </ReviewShell>
+    );
   }
 
-  const { client, manager, posts } = session.data;
+  // The client is resolved from the token server-side, never from anything the browser sends.
+  if (!session.ok) {
+    return (
+      <ReviewShell>
+        <AccessDenied message={session.error} />
+      </ReviewShell>
+    );
+  }
+
+  const { client, manager, posts } = session;
   const active = postId ? posts.find((p) => p.id === postId) : undefined;
 
   if (postId && !active) {
@@ -69,8 +80,8 @@ export function ReviewPortalPage() {
         <ReviewPostView
           token={token}
           postId={active.id}
-          onDecide={(postIdArg, input) => decideAsClient(token, postIdArg, input)}
-          notify={notify}
+          businessName={client.business_name}
+          managerName={manager?.full_name}
         />
       ) : (
         <ReviewQueue token={token} posts={posts} clientName={client.business_name} />
@@ -243,62 +254,70 @@ function PostSummaryCard({ token, post }: { token: string; post: Post }) {
 function ReviewPostView({
   token,
   postId,
-  onDecide,
-  notify,
+  businessName,
+  managerName,
 }: {
   token: string;
   postId: string;
-  onDecide: (
-    postId: string,
-    input: { decision: Decision; comments: string; expectedRevision: number },
-  ) => { ok: boolean; error?: string };
-  notify: (toast: { tone: 'success' | 'error' | 'info'; title: string; description?: string }) => void;
+  businessName: string;
+  managerName?: string;
 }) {
-  const { db } = useStore();
+  const { decideAsClient, notify } = useStore();
+  const result = useQuery(api.review.post, { token, postId: postId as never });
   const [feedbackOpen, setFeedbackOpen] = React.useState(false);
   const [comments, setComments] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
 
-  const resolved = getReviewPost(db, token, postId);
-  if (!resolved.ok) {
-    return <AccessDenied message={resolved.error} />;
+  if (result === undefined) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-16 text-muted-foreground">
+        <Loader2 className="size-5 animate-spin" />
+        <p className="text-[13px]">Loading this post…</p>
+      </div>
+    );
   }
 
-  const { post, session } = resolved.data;
-  const history = db.feedback
-    .filter((f) => f.post_id === post.id)
-    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+  if (!result.ok) {
+    return <AccessDenied message={result.error} />;
+  }
+
+  const { post, feedback: history } = result;
   const deadline = deadlineLabel(post.review_deadline);
   const decided = post.status !== 'pending_approval';
 
-  const approve = () => {
+  const approve = async () => {
+    setError(null);
     setBusy(true);
-    const result = onDecide(post.id, { decision: 'approved', comments: '', expectedRevision: post.revision });
+    const outcome = await decideAsClient(token, post.id, {
+      decision: 'approved',
+      comments: '',
+      expectedRevision: post.revision,
+    });
     setBusy(false);
-    if (!result.ok) {
-      setError(result.error ?? 'Something went wrong.');
-      notify({ tone: 'error', title: 'Could not record approval', description: result.error });
+    if (!outcome.ok) {
+      setError(outcome.error);
+      notify({ tone: 'error', title: 'Could not record approval', description: outcome.error });
       return;
     }
     notify({ tone: 'success', title: 'Post approved', description: 'Your manager has been notified.' });
   };
 
-  const submitChanges = () => {
+  const submitChanges = async () => {
     setError(null);
     if (comments.trim().length < 5) {
       setError('Please describe the changes you need (at least 5 characters).');
       return;
     }
     setBusy(true);
-    const result = onDecide(post.id, {
+    const outcome = await decideAsClient(token, post.id, {
       decision: 'changes_requested',
       comments,
       expectedRevision: post.revision,
     });
     setBusy(false);
-    if (!result.ok) {
-      setError(result.error ?? 'Something went wrong.');
+    if (!outcome.ok) {
+      setError(outcome.error);
       return;
     }
     setFeedbackOpen(false);
@@ -330,7 +349,7 @@ function ReviewPostView({
             <div className="min-w-0">
               <h1 className="text-lg font-semibold tracking-tight sm:text-xl">{post.title}</h1>
               <p className="mt-0.5 text-[12.5px] text-muted-foreground">
-                {session.client.business_name} · Revision {post.revision}
+                {businessName} · Revision {post.revision}
               </p>
             </div>
             <StatusBadge status={post.status} />
@@ -467,7 +486,7 @@ function ReviewPostView({
           <DialogHeader>
             <DialogTitle>Request changes</DialogTitle>
             <DialogDescription>
-              Tell {session.manager?.full_name ?? 'your manager'} what needs to change. A comment is required.
+              Tell {managerName ?? 'your manager'} what needs to change. A comment is required.
             </DialogDescription>
           </DialogHeader>
           <DialogBody className="space-y-2">

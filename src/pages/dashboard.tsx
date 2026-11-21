@@ -20,19 +20,19 @@ import { EmptyState } from '@/components/empty-state';
 import { ClientFormDialog } from '@/components/clients/client-form-dialog';
 import { PostFormDialog } from '@/components/posts/post-form-dialog';
 import { useStore } from '@/lib/store';
-import { dashboardStats, listActivity } from '@/lib/repository';
+import { dashboardStats } from '@/lib/repository';
 import { formatDayLabel, formatRelative, deadlineLabel, truncate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import type { Post } from '@/lib/types';
 
 export function DashboardPage() {
-  const { db, session, manager, clients, posts, notify } = useStore();
+  const { db, session, manager, clients, posts, activity, notify } = useStore();
   const navigate = useNavigate();
   const [clientDialogOpen, setClientDialogOpen] = React.useState(false);
   const [postDialogOpen, setPostDialogOpen] = React.useState(false);
 
   const stats = dashboardStats(db, session.managerId);
-  const activity = listActivity(db, session.managerId, 6);
+  const recentActivity = activity.slice(0, 6);
   const clientById = React.useMemo(() => new Map(clients.map((c) => [c.id, c])), [clients]);
 
   const pending = posts
@@ -81,6 +81,8 @@ export function DashboardPage() {
   ];
 
   const approveRate = stats.totalPosts === 0 ? 0 : Math.round((stats.approvedPosts / stats.totalPosts) * 100);
+
+  if (!manager) return null;
 
   return (
     <div className="space-y-6">
@@ -281,13 +283,13 @@ export function DashboardPage() {
               <CardTitle>Recent activity</CardTitle>
             </CardHeader>
             <CardContent className="pt-4">
-              {activity.length === 0 ? (
+              {recentActivity.length === 0 ? (
                 <p className="py-6 text-center text-[13px] text-muted-foreground">No activity recorded yet.</p>
               ) : (
                 <ol className="relative space-y-3.5">
-                  {activity.map((entry, index) => (
+                  {recentActivity.map((entry, index) => (
                     <li key={entry.id} className="relative flex gap-3">
-                      {index < activity.length - 1 && (
+                      {index < recentActivity.length - 1 && (
                         <span className="absolute left-[5px] top-4 h-full w-px bg-border" aria-hidden />
                       )}
                       <span

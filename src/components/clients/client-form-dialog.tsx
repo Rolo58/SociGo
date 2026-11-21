@@ -60,7 +60,7 @@ export function ClientFormDialog({ open, onOpenChange, client, onSaved }: Client
     });
   };
 
-  const submit = (event: React.FormEvent) => {
+  const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     const next: Record<string, string> = {};
     if (form.client_name.trim().length < 2) next.client_name = 'Enter the contact name.';
@@ -70,7 +70,7 @@ export function ClientFormDialog({ open, onOpenChange, client, onSaved }: Client
     if (Object.keys(next).length > 0) return;
 
     setBusy(true);
-    const result = client ? updateClient(client.id, form) : createClient(form);
+    const result = client ? await updateClient(client.id, form) : await createClient(form);
     setBusy(false);
 
     if (!result.ok) {

@@ -64,10 +64,10 @@ export function PostsPage() {
       setEditing(post);
       setDialogOpen(true);
     },
-    onSubmit: (post: Post) =>
-      handleResult(submitPost(post.id), 'Post submitted', 'The client can now review this content.'),
-    onDuplicate: (post: Post) => {
-      const result = duplicatePost(post.id);
+    onSubmit: async (post: Post) =>
+      handleResult(await submitPost(post.id), 'Post submitted', 'The client can now review this content.'),
+    onDuplicate: async (post: Post) => {
+      const result = await duplicatePost(post.id);
       if (result.ok) {
         notify({ tone: 'success', title: 'Draft duplicated', description: truncate(result.data.title, 60) });
         navigate(`/app/posts/${result.data.id}`);
@@ -75,12 +75,12 @@ export function PostsPage() {
         notify({ tone: 'error', title: 'Could not duplicate post', description: result.error });
       }
     },
-    onArchive: (post: Post) => {
-      const result = archivePost(post.id);
+    onArchive: async (post: Post) => {
+      const result = await archivePost(post.id);
       handleResult(result, 'Post archived', 'You can restore it from the archive tab.');
     },
-    onRestore: (post: Post) => {
-      const result = restorePost(post.id);
+    onRestore: async (post: Post) => {
+      const result = await restorePost(post.id);
       handleResult(result, 'Post restored', 'It is now a draft.');
     },
   };

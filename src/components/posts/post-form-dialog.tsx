@@ -135,14 +135,14 @@ export function PostFormDialog({ open, onOpenChange, post, defaultClientId, onSa
     };
 
     const result = post
-      ? updatePost(post.id, payload)
-      : createPost(payload, mode === 'submit' ? 'pending_approval' : 'draft');
+      ? await updatePost(post.id, payload)
+      : await createPost(payload, mode === 'submit' ? 'pending_approval' : 'draft');
 
     let saved = result.ok ? result.data : null;
 
     // Editing an existing draft and choosing "submit" saves first, then moves it to Pending.
     if (saved && post && mode === 'submit' && saved.status !== 'pending_approval') {
-      const submitted = submitPost(saved.id);
+      const submitted = await submitPost(saved.id);
       if (!submitted.ok) {
         setBusy(false);
         notify({

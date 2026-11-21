@@ -56,6 +56,7 @@ function NavItems({ onNavigate }: { onNavigate?: () => void }) {
 
 function ManagerCard() {
   const { manager } = useStore();
+  if (!manager) return null;
   return (
     <div className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/50 p-2.5">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/12 text-[11px] font-semibold text-primary">
