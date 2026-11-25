@@ -1,5 +1,5 @@
 /**
- * Domain types mirror the PostgreSQL schema defined in the ApprovalFlow PRD (section 6).
+ * Domain types mirror the PostgreSQL schema defined in the Soci Go PRD (section 6).
  * Field names intentionally match column names so the Phase 2 Supabase client can be
  * dropped in without reshaping UI code.
  */

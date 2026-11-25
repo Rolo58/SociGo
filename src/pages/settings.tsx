@@ -57,7 +57,7 @@ export function SettingsPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `approvalflow-export-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `socigo-export-${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
     URL.revokeObjectURL(url);
     notify({ tone: 'success', title: 'Data exported', description: 'A JSON copy of this workspace was downloaded.' });

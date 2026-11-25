@@ -20,7 +20,7 @@ function AuthLayout({ children, aside }: { children: React.ReactNode; aside: Rea
         <Logo />
         <div className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center py-10">{children}</div>
         <p className="text-center text-[11.5px] text-muted-foreground lg:text-left">
-          ApprovalFlow is free and open source. No subscriptions, no locked features.
+          Soci Go is free and open source. No subscriptions, no locked features.
         </p>
       </div>
       <div className="hidden border-l border-border bg-gradient-to-br from-primary/8 via-indigo-50/60 to-sky-50/50 lg:flex lg:flex-col lg:justify-center lg:px-14">
@@ -46,7 +46,7 @@ export function LoginPage() {
   const location = useLocation();
   const { login, notify } = useStore();
   const [email, setEmail] = React.useState('priya@northlight.studio');
-  const [password, setPassword] = React.useState('approvalflow-demo');
+  const [password, setPassword] = React.useState('socigo-demo');
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   const [busy, setBusy] = React.useState(false);
 
@@ -108,7 +108,7 @@ export function LoginPage() {
       <div className="mt-6">
         <DemoHint>
           Demo workspace: <span className="font-medium text-foreground">priya@northlight.studio</span> /{' '}
-          <span className="font-medium text-foreground">approvalflow-demo</span>
+          <span className="font-medium text-foreground">socigo-demo</span>
         </DemoHint>
         <form onSubmit={submit} noValidate className="space-y-4">
           <FormField label="Email address" htmlFor="login-email" required error={errors.email}>
@@ -194,7 +194,7 @@ export function RegisterPage() {
         <div className="max-w-md">
           <h2 className="text-3xl font-semibold leading-tight tracking-tight">Set up your workspace in a minute.</h2>
           <p className="mt-3 text-[13.5px] leading-relaxed text-muted-foreground">
-            ApprovalFlow is built for freelancers and small agencies. Create clients, submit content and collect
+            Soci Go is built for freelancers and small agencies. Create clients, submit content and collect
             decisions without another spreadsheet.
           </p>
           <div className="mt-6 grid gap-3">

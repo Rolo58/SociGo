@@ -18,7 +18,7 @@ import {
  * someone else's deployment.
  */
 
-export const DEMO_PASSWORD = 'approvalflow-demo';
+export const DEMO_PASSWORD = 'socigo-demo';
 
 export const seedDemoWorkspace = internalMutation({
   args: {},

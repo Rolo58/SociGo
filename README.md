@@ -1,12 +1,12 @@
-# ApprovalFlow 🚀
+# Soci Go 🚀
 
 ### Create. Share. Approve. Publish.
 
-ApprovalFlow is a free and open-source client content approval platform built for freelance social media managers and digital marketing agencies.
+Soci Go is a free and open-source client content approval platform built for freelance social media managers and digital marketing agencies.
 
 It simplifies the content approval process by bringing managers and clients together in one organised workspace.
 
-Instead of managing approvals through scattered WhatsApp messages, emails and spreadsheets, ApprovalFlow provides a centralised platform to submit content, collect feedback and track approval statuses.
+Instead of managing approvals through scattered WhatsApp messages, emails and spreadsheets, Soci Go provides a centralised platform to submit content, collect feedback and track approval statuses.
 
 > **Status: Phase 2 — Backend connected.** The full manager and client interface now runs on a real Convex backend: server-side authentication, tenant-scoped data, the approval workflow, feedback history and account management. See [Backend](#-backend-convex) for setup. Sample data is fictional and can be seeded with one command.
 
@@ -29,7 +29,7 @@ Instead of managing approvals through scattered WhatsApp messages, emails and sp
 
 Our mission is to make social media content collaboration simpler, faster and more organised.
 
-ApprovalFlow aims to eliminate unnecessary communication overhead and help freelancers focus on creating quality content instead of chasing approvals.
+Soci Go aims to eliminate unnecessary communication overhead and help freelancers focus on creating quality content instead of chasing approvals.
 
 ---
 
@@ -76,7 +76,7 @@ cd SociGo
 npm install
 ```
 
-ApprovalFlow needs a Convex deployment. The fastest option is Convex Cloud's free tier:
+Soci Go needs a Convex deployment. The fastest option is Convex Cloud's free tier:
 
 ```bash
 npx convex dev --configure new --dev-deployment cloud
@@ -96,7 +96,7 @@ Open the printed URL (defaults to `http://localhost:12000`). Register a manager 
 npx convex run seed:seedDemoWorkspace
 ```
 
-The demo workspace signs in as `priya@northlight.studio` / `approvalflow-demo`.
+The demo workspace signs in as `priya@northlight.studio` / `socigo-demo`.
 
 To point at a self-hosted backend instead, copy the example environment file and fill it in:
 
@@ -118,7 +118,7 @@ cp .env.example .env.local
 
 ## 🧭 Exploring the app
 
-Sign in at `#/login` with the seeded demo manager, `priya@northlight.studio` / `approvalflow-demo`, or register a fresh workspace at `#/register`.
+Sign in at `#/login` with the seeded demo manager, `priya@northlight.studio` / `socigo-demo`, or register a fresh workspace at `#/register`.
 
 | What to try | Where |
 | --- | --- |
@@ -240,7 +240,7 @@ The suite covers the security-critical rules rather than UI rendering:
 
 ## ☁️ Backend (Convex)
 
-ApprovalFlow uses [Convex](https://www.convex.dev/), which is Apache-2.0 licensed and can run entirely on your own machine. Nothing in the app requires a paid service.
+Soci Go uses [Convex](https://www.convex.dev/), which is Apache-2.0 licensed and can run entirely on your own machine. Nothing in the app requires a paid service.
 
 ### Option A — Convex Cloud (free tier)
 
@@ -254,17 +254,17 @@ Run the open-source backend binary, then point the CLI at it:
 
 ```bash
 # 1. Generate a deploy key (format: <instance-name>|<instance-secret>)
-convex-local-backend keygen admin-key --instance-name approvalflow --instance-secret <your-secret>
+convex-local-backend keygen admin-key --instance-name soci-go --instance-secret <your-secret>
 
 # 2. Start the backend
 convex-local-backend \
-  --instance-name approvalflow \
+  --instance-name soci-go \
   --instance-secret <your-secret> \
   --port 3210
 
 # 3. In .env.local
 CONVEX_SELF_HOSTED_URL=http://127.0.0.1:3210
-CONVEX_SELF_HOSTED_ADMIN_KEY=approvalflow|<your-secret>
+CONVEX_SELF_HOSTED_ADMIN_KEY=soci-go|<your-secret>
 VITE_CONVEX_URL=http://127.0.0.1:3210
 
 # 4. Push functions

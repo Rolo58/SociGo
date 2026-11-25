@@ -1,10 +1,10 @@
 # AGENTS.md
 
-Repository knowledge for AI agents working on ApprovalFlow.
+Repository knowledge for AI agents working on Soci Go.
 
 ## What this project is
 
-ApprovalFlow (repo directory `SociGo`) is a client content approval platform for freelance social media managers and small agencies. The product spec is the ApprovalFlow PRD; deliver it in phases and do not build features the PRD lists as out of scope.
+Soci Go (repo directory `SociGo`) is a client content approval platform for freelance social media managers and small agencies. The product spec is the Soci Go PRD; deliver it in phases and do not build features the PRD lists as out of scope.
 
 ## Current phase
 
@@ -25,7 +25,7 @@ npx convex run seed:seedDemoWorkspace   # load the fictional demo workspace
 npx convex run seed:resetAll            # wipe all data including accounts
 ```
 
-Demo login: `priya@northlight.studio` / `approvalflow-demo`.
+Demo login: `priya@northlight.studio` / `socigo-demo`.
 
 ## Architecture rules
 

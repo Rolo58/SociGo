@@ -10,7 +10,7 @@ export function Logo({ className, showWordmark = true }: { className?: string; s
       </span>
       {showWordmark && (
         <span className="text-[15px] font-semibold tracking-tight text-foreground">
-          Approval<span className="text-primary">Flow</span>
+          Soci<span className="text-primary"> Go</span>
         </span>
       )}
     </span>

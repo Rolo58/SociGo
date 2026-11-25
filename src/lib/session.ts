@@ -1,4 +1,4 @@
-const SESSION_KEY = 'approvalflow.session.v1';
+const SESSION_KEY = 'socigo.session.v1';
 
 /**
  * The raw session token is the only thing kept in the browser. It is an opaque bearer

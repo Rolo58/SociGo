@@ -1,10 +1,10 @@
 {
-  "name": "approvalflow",
+  "name": "soci-go",
   "private": true,
   "version": "0.1.0",
   "type": "module",
   "license": "MIT",
-  "description": "ApprovalFlow - client content approval platform for social media managers and agencies.",
+  "description": "Soci Go - client content approval platform for social media managers and agencies.",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
