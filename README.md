@@ -10,6 +10,8 @@ Instead of managing approvals through scattered WhatsApp messages, emails and sp
 
 > **Status: Phase 2 — Backend connected.** The full manager and client interface now runs on a real Convex backend: server-side authentication, tenant-scoped data, the approval workflow, feedback history and account management. See [Backend](#-backend-convex) for setup. Sample data is fictional and can be seeded with one command.
 
+The product specification lives in [`docs/PRD.md`](docs/PRD.md). It defines the MVP scope, the modules and the acceptance criteria; read it before adding features.
+
 ---
 
 ## ✨ Features

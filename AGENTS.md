@@ -4,13 +4,13 @@ Repository knowledge for AI agents working on Soci Go.
 
 ## What this project is
 
-Soci Go (repo directory `SociGo`) is a client content approval platform for freelance social media managers and small agencies. The product spec is the Soci Go PRD; deliver it in phases and do not build features the PRD lists as out of scope.
+Soci Go (repo directory `SociGo`) is a client content approval platform for freelance social media managers and small agencies. The product spec is `docs/PRD.md`; deliver it in phases and do not build features the PRD lists as out of scope. Read it before starting work on a new module.
 
 ## Current phase
 
 Phase 2 (backend) is complete: the app runs on Convex with server-side authentication, tenant isolation and the full approval workflow. Phase 3 (image uploads to Convex file storage) is next. Creatives currently use bundled artwork in `public/samples/`.
 
-Note: the PRD names Supabase as the backend. The implementation uses Convex instead, which keeps the PRD's security and self-hosting requirements while staying free. Do not reintroduce Supabase without being asked.
+Note: `docs/PRD.md` section 6 names Supabase as the backend. The implementation uses Convex instead, which keeps the PRD's security and self-hosting requirements while staying free. Do not reintroduce Supabase without being asked.
 
 ## Commands
 
