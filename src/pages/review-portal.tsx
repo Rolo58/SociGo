@@ -36,8 +36,8 @@ import type { Post } from '@/lib/types';
 
 /**
  * Client-facing portal. The review token in the URL is the only credential, and every
- * lookup re-derives the client from that token rather than trusting anything from the
- * browser. Phase 2 moves these checks into Supabase RLS plus an Edge Function.
+ * lookup re-derives the client from that token server-side in `convex/review.ts` rather
+ * than trusting anything from the browser.
  */
 export function ReviewPortalPage() {
   const { token = '', postId } = useParams();

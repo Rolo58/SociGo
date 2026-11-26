@@ -8,9 +8,7 @@
 **Development Priority:** MVP
 **Working Tagline:** Create. Share. Approve. Publish.
 
-> **Status note.** This is the original product specification, kept in the repository as the source of truth for scope. One deviation exists in the current implementation, recorded here so the spec and the code do not silently diverge:
->
-> **Backend.** Section 6 specifies Supabase. The implementation uses Convex, which satisfies the same security and self-hosting requirements (server-side authentication, tenant isolation, no service-role credentials in the browser) while remaining free to self-host. See `AGENTS.md`.
+> **Status note.** This is the product specification, kept in the repository as the source of truth for scope. It describes the system as built: Convex provides the database, server functions and self-hostable infrastructure. The schema in `convex/schema.ts` is authoritative; section 6 documents it.
 >
 > Section 15 governs: the application must not depend exclusively on a paid third-party service, and must remain self-hostable.
 
@@ -155,7 +153,10 @@ Features:
 
 Requirements:
 
-- Use Supabase Authentication.
+- Use Convex Auth implemented in `convex/auth.ts`: email and password credentials, with passwords hashed using PBKDF2-SHA256 (210,000 iterations) and a per-user salt.
+- Sessions are opaque bearer tokens. The browser holds the raw token; the database stores only its SHA-256 hash, so a database leak does not yield live sessions.
+- Sessions expire 14 days after issue and are revoked on logout.
+- Failed logins are counted per email address and locked out after repeated failures.
 - Support email and password authentication.
 - Protect authenticated manager pages.
 - Prevent unauthorised access to private information.
@@ -371,79 +372,143 @@ Step 6: The application records the decision.
 
 # 6. DATABASE REQUIREMENTS
 
-Use Supabase PostgreSQL as the initial database.
+Use Convex as the database and server runtime. Convex provides an ACID transactional document database with typed schema validation and server-side functions; the schema lives in `convex/schema.ts` and every read and write passes through a server function.
 
 ## Table 1: profiles
 
 Fields:
 
-- id (UUID, primary key, references authentication user)
-- full_name (text)
-- email (text)
-- created_at (timestamp)
+- id (document id, primary key)
+- full_name (string)
+- email (string)
+- business_name (string)
+- created_at (string, ISO 8601)
+
+Index: `by_email`.
+
+## Table 1a: credentials
+
+Credentials are split from `profiles` so that reading a profile can never ship a password hash.
+
+Fields:
+
+- id (document id, primary key)
+- profile_id (reference to profiles)
+- email (string)
+- password_hash (string)
+- password_salt (string)
+
+Index: `by_email`.
+
+## Table 1b: sessions
+
+Opaque bearer sessions. The browser holds the raw token; the database holds only its hash.
+
+Fields:
+
+- id (document id, primary key)
+- token_hash (string)
+- profile_id (reference to profiles)
+- created_at (number, epoch milliseconds)
+- expires_at (number, epoch milliseconds)
+
+Indexes: `by_token_hash`, `by_profile`.
+
+## Table 1c: login_attempts
+
+Failed-login counters, keyed by email so a lockout survives credential checks.
+
+Fields:
+
+- id (document id, primary key)
+- email (string)
+- failed_count (number)
+- locked_until (number, epoch milliseconds)
+
+Index: `by_email`.
 
 ## Table 2: clients
 
 Fields:
 
-- id (UUID, primary key)
-- manager_id (UUID, references profiles)
-- client_name (text)
-- business_name (text)
-- email (text)
-- created_at (timestamp)
+- id (document id, primary key)
+- manager_id (reference to profiles)
+- client_name (string)
+- business_name (string)
+- email (string)
+- profile_image_url (string or null)
+- review_token (string)
+- review_token_expires_at (string or null)
+- archived_at (string or null)
+- created_at (string, ISO 8601)
+
+Indexes: `by_manager`, `by_review_token`, `by_manager_email`.
 
 ## Table 3: posts
 
 Fields:
 
-- id (UUID, primary key)
-- manager_id (UUID)
-- client_id (UUID)
-- title (text)
-- platform (text)
-- caption (text)
-- image_url (text)
-- scheduled_date (date)
-- review_deadline (timestamp)
-- status (text)
-- created_at (timestamp)
-- updated_at (timestamp)
+- id (document id, primary key)
+- manager_id (reference to profiles)
+- client_id (reference to clients)
+- title (string)
+- platform (string: `instagram`, `facebook`, `linkedin`)
+- caption (string)
+- image_url (string or null)
+- scheduled_date (string, `YYYY-MM-DD`)
+- review_deadline (string or null)
+- notes (string or null)
+- status (string: `draft`, `pending_approval`, `approved`, `changes_requested`, `archived`)
+- revision (number)
+- submitted_at (string or null)
+- created_at (string, ISO 8601)
+- updated_at (string, ISO 8601)
+
+Indexes: `by_manager`, `by_manager_updated`, `by_client`, `by_manager_scheduled`.
 
 ## Table 4: feedback
 
+One row per client decision, retained permanently as history.
+
 Fields:
 
-- id (UUID, primary key)
-- post_id (UUID)
-- client_id (UUID)
-- decision (text)
-- comments (text)
-- created_at (timestamp)
+- id (document id, primary key)
+- post_id (reference to posts)
+- client_id (reference to clients)
+- manager_id (reference to profiles)
+- decision (string: `approved`, `changes_requested`)
+- comments (string)
+- post_revision (number)
+- created_at (string, ISO 8601)
+
+Indexes: `by_post`, `by_post_revision`.
 
 ## Table 5: activity_logs
 
 Fields:
 
-- id (UUID, primary key)
-- manager_id (UUID)
-- post_id (UUID)
-- activity_type (text)
-- description (text)
-- created_at (timestamp)
+- id (document id, primary key)
+- manager_id (reference to profiles)
+- post_id (reference to posts, or null)
+- client_id (reference to clients, or null)
+- activity_type (string)
+- description (string)
+- created_at (string, ISO 8601)
 
-Database requirements:
+Index: `by_manager_created`.
 
-- Use UUID identifiers.
-- Establish foreign-key relationships.
+## Database requirements
+
+- Use Convex document ids as primary keys.
+- Establish relationships through `v.id()` references, validated by the schema.
 - Use timestamps for important actions.
-- Validate required fields.
-- Apply database constraints.
-- Enable Row Level Security (RLS).
-- Prevent users from accessing other managers' records.
+- Validate required fields with Convex validators at the schema boundary.
+- Apply database constraints: enum-like fields use `v.union` of literals, and nullable fields are explicitly typed as nullable rather than left absent.
+- Enforce access control in server functions. Convex has no Row Level Security, so the equivalent guarantee is that no table is readable or writable from the browser: every function calls `requireManager` and re-checks ownership through a manager-scoped index.
+- Prevent users from accessing other managers' records. Functions return "not found" rather than "forbidden" for another tenant's record, so ids cannot be probed.
 - Validate client access before permitting approval actions.
 
-Client approval identity must be verified, not accepted from an arbitrary client ID submitted by the browser.
+Client approval identity must be verified, not accepted from an arbitrary client ID submitted by the browser. The acting client is resolved server-side from the review token, and the post must belong to that client.
 
 ---
 
@@ -503,14 +568,14 @@ The mobile layout should use a collapsible navigation menu and vertically stacke
 
 ## Security
 
-- Use Supabase Authentication.
-- Enable Row Level Security.
+- Authenticate with Convex server functions in `convex/auth.ts` (PBKDF2-SHA256, opaque session tokens stored only as hashes).
+- Enforce tenant isolation in every server function. Convex has no Row Level Security, so `requireManager` plus manager-scoped indexes provide the equivalent guarantee.
 - Enforce manager and client permissions.
 - Protect private client information.
 - Validate all inputs.
-- Do not expose database service-role credentials in frontend code.
+- Do not expose privileged Convex credentials in frontend code. Only `VITE_CONVEX_URL` is public; `CONVEX_SELF_HOSTED_ADMIN_KEY` is server-side only.
 - Restrict image access appropriately.
-- Verify review permissions on the server/database side.
+- Verify review permissions on the server side.
 
 ## Performance
 
@@ -627,11 +692,11 @@ The MVP is considered functional only when the following tests pass.
 
 ## Phase 2: Backend
 
-- Configure Supabase.
-- Create database tables.
+- Configure Convex.
+- Define the schema in `convex/schema.ts`.
 - Configure authentication.
-- Implement Row Level Security.
-- Connect frontend to database.
+- Enforce tenant isolation in server functions.
+- Connect frontend to the backend.
 
 ## Phase 3: Functionality
 
@@ -750,9 +815,9 @@ Frontend:
 
 Backend:
 
-- Supabase-compatible PostgreSQL.
-- Supabase Authentication as an optional hosted authentication provider.
-- Secure database access controls.
+- Convex as the database and server runtime (Apache-2.0).
+- Convex Cloud's free tier as a convenient hosted option, or `convex-local-backend` for a fully self-hosted deployment.
+- Secure database access controls, enforced in server functions rather than in the browser.
 - Storage abstraction that can support self-hosted alternatives.
 
 ## Deployment
@@ -760,8 +825,8 @@ Backend:
 Provide documentation for:
 
 - Local development.
-- Self-hosted deployment.
-- Supabase configuration.
+- Self-hosted deployment (Convex local backend).
+- Convex configuration.
 - Database setup.
 - Environment configuration.
 

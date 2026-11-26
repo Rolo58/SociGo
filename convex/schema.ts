@@ -2,8 +2,8 @@ import { defineSchema, defineTable } from 'convex/server';
 import { v } from 'convex/values';
 
 /**
- * Mirrors the PostgreSQL schema in PRD section 6, with the additions the workflow needs
- * (review tokens, revisions, archives). Every table is scoped by `manager_id` except
+ * Authoritative data model, documented in PRD section 6. Includes the fields the workflow
+ * needs (review tokens, revisions, archives). Every table is scoped by `manager_id` except
  * `feedback`, which is reached through its post.
  */
 

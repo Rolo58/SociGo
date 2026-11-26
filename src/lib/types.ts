@@ -1,7 +1,6 @@
 /**
- * Domain types mirror the PostgreSQL schema defined in the Soci Go PRD (section 6).
- * Field names intentionally match column names so the Phase 2 Supabase client can be
- * dropped in without reshaping UI code.
+ * Domain types mirror the Convex schema in `convex/schema.ts`, documented in the Soci Go
+ * PRD (section 6). Field names match the schema so serializers stay one-to-one.
  */
 
 export type PostStatus = 'draft' | 'pending_approval' | 'approved' | 'changes_requested' | 'archived';

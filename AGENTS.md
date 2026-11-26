@@ -10,7 +10,7 @@ Soci Go (repo directory `SociGo`) is a client content approval platform for free
 
 Phase 2 (backend) is complete: the app runs on Convex with server-side authentication, tenant isolation and the full approval workflow. Phase 3 (image uploads to Convex file storage) is next. Creatives currently use bundled artwork in `public/samples/`.
 
-Note: `docs/PRD.md` section 6 names Supabase as the backend. The implementation uses Convex instead, which keeps the PRD's security and self-hosting requirements while staying free. Do not reintroduce Supabase without being asked.
+The backend is Convex: `convex/schema.ts` is the authoritative data model and `docs/PRD.md` section 6 documents it. Do not introduce Supabase or another database without being asked.
 
 ## Commands
 
